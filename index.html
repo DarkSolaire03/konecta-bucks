@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konecta Bucks — Direct Deposit</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f4f1ea; color: #1c2430; padding: 20px 16px 60px; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .brand { display: flex; gap: 14px; align-items: center; }
+  .logo { width: 52px; height: 52px; border-radius: 12px; background: #1d2fbf; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; }
+  h1 { font-size: 26px; font-weight: 800; }
+  .period { color: #6b7280; font-size: 14px; margin-top: 3px; }
+  .head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  button { cursor: pointer; border: none; border-radius: 9px; font-size: 14px; font-weight: 600; padding: 10px 16px; }
+  .btn-primary { background: #1d2fbf; color: #fff; }
+  .btn-primary:hover { background: #1826a0; }
+  .btn-ghost { background: #fff; color: #374151; border: 1px solid #ddd6c9; }
+  .btn-ghost:hover { background: #faf7f1; }
+  .btn-deposit { background: #eceae4; color: #374151; padding: 7px 14px; font-size: 13px; }
+  .btn-deposit:hover { background: #e0ddd4; }
+  .btn-danger { background: #fdecec; color: #b3261e; padding: 7px 10px; font-size: 13px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 22px 0; }
+  .card { background: #fff; border: 1px solid #e7e1d3; border-radius: 14px; padding: 18px; }
+  .card .label { font-size: 12px; letter-spacing: .06em; color: #6b7280; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  .card .value { font-size: 30px; font-weight: 800; margin-top: 8px; }
+  .card .value small { font-size: 15px; color: #6b7280; font-weight: 600; }
+  .panel { background: #fff; border: 1px solid #e7e1d3; border-radius: 14px; padding: 16px; }
+  .panel-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .tabs { display: flex; gap: 8px; }
+  .tab { background: transparent; color: #6b7280; padding: 9px 14px; border-radius: 9px; }
+  .tab.active { background: #eef0fb; color: #1d2fbf; }
+  .search { padding: 10px 14px; border: 1px solid #ddd6c9; border-radius: 9px; font-size: 14px; min-width: 220px; background: #fbf9f5; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 12px; letter-spacing: .05em; color: #6b7280; padding: 12px 10px; border-bottom: 1px solid #eee7d8; }
+  td { padding: 14px 10px; border-bottom: 1px solid #f1ebdd; font-size: 15px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  th.num { text-align: right; }
+  .kb { color: #0a7d4f; font-weight: 700; }
+  .empty { text-align: center; color: #9ca3af; padding: 34px 10px; font-size: 15px; }
+  .admin-bar { display: none; background: #fff8e1; border: 1px solid #f0dfa0; color: #6d5b00; border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; font-size: 14px; }
+  .admin-bar.show { display: block; }
+  .admin-bar button { margin-left: 8px; padding: 6px 12px; font-size: 13px; }
+  dialog { border: none; border-radius: 14px; padding: 24px; width: min(420px, 92vw); box-shadow: 0 18px 50px rgba(0,0,0,.25); }
+  dialog::backdrop { background: rgba(20,20,30,.45); }
+  dialog h2 { font-size: 19px; margin-bottom: 14px; }
+  dialog label { display: block; font-size: 13px; font-weight: 600; color: #4b5563; margin: 12px 0 5px; }
+  dialog input, dialog select { width: 100%; padding: 10px 12px; border: 1px solid #d8d2c4; border-radius: 8px; font-size: 15px; }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+  footer { text-align: center; color: #9ca3af; font-size: 13px; margin-top: 26px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">K</div>
+      <div>
+        <h1 id="pageTitle">Konecta Bucks — Direct Deposit</h1>
+        <div class="period">🗓 <span id="periodLabel"></span></div>
+      </div>
+    </div>
+    <div class="head-actions">
+      <button class="btn-ghost" id="adminBtn">🔒 Admin</button>
+      <button class="btn-primary hidden" id="newDepositBtn">+ New Direct Deposit</button>
+    </div>
+  </header>
+
+  <div class="admin-bar" id="adminBar">
+    <strong>Admin mode.</strong> Changes save on this device. To update the shared board everyone sees, publish the updated data file.
+    <button class="btn-primary" id="publishBtn">⬇ Publish data.json</button>
+    <button class="btn-ghost" id="addAgentBtn">+ Add Agent</button>
+    <button class="btn-ghost" id="resetBtn">Reset to published</button>
+    <button class="btn-ghost" id="lockBtn">Lock</button>
+  </div>
+
+  <section class="stats">
+    <div class="card"><div class="label">TOTAL DEPOSITED <span>💵</span></div><div class="value"><span id="statTotal">0</span> <small>KB</small></div></div>
+    <div class="card"><div class="label">ACTIVE AGENTS <span>👥</span></div><div class="value"><span id="statActive">0</span> <small>/ <span id="statAgents">0</span></small></div></div>
+    <div class="card"><div class="label">TOTAL DEPOSITS <span>🏅</span></div><div class="value"><span id="statCount">0</span></div></div>
+    <div class="card"><div class="label">AVERAGE DEPOSIT <span>📈</span></div><div class="value"><span id="statAvg">0</span> <small>KB</small></div></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-top">
+      <div class="tabs">
+        <button class="tab active" id="tabBalances">Agent Balances (<span id="balCount">0</span>)</button>
+        <button class="tab" id="tabLedger">Daily Deposit Ledger (<span id="ledCount">0</span>)</button>
+      </div>
+      <input class="search" id="searchBox" type="search" placeholder="Search agent or using…">
+    </div>
+
+    <div id="balancesView">
+      <table>
+        <thead><tr>
+          <th>AGENT</th><th class="num">ACCUMULATED TOTAL</th><th class="num">DEPOSITS</th><th>LATEST DEPOSIT DATE</th><th>USING</th><th class="admin-only hidden">ACTION</th>
+        </tr></thead>
+        <tbody id="balancesBody"></tbody>
+      </table>
+      <div class="empty hidden" id="balancesEmpty">No agents yet. Unlock Admin to add your team.</div>
+    </div>
+
+    <div id="ledgerView" class="hidden">
+      <table>
+        <thead><tr>
+          <th>DATE</th><th>AGENT</th><th class="num">AMOUNT</th><th>USING / NOTE</th><th class="admin-only hidden">ACTION</th>
+        </tr></thead>
+        <tbody id="ledgerBody"></tbody>
+      </table>
+      <div class="empty hidden" id="ledgerEmpty">No deposits yet.</div>
+    </div>
+  </section>
+
+  <footer>Konecta Bucks are a fun, unofficial team currency — this board is just for tracking them.</footer>
+</div>
+
+<dialog id="depositDialog">
+  <form method="dialog" id="depositForm">
+    <h2>New Direct Deposit</h2>
+    <label for="depAgent">Agent</label>
+    <select id="depAgent" required></select>
+    <label for="depAmount">Amount (KB)</label>
+    <input id="depAmount" type="number" min="1" step="1" required placeholder="e.g. 50">
+    <label for="depDate">Date</label>
+    <input id="depDate" type="date" required>
+    <label for="depNote">Using / note (optional)</label>
+    <input id="depNote" type="text" placeholder="e.g. Top caller of the day">
+    <div class="dialog-actions">
+      <button type="button" class="btn-ghost" id="depCancel">Cancel</button>
+      <button type="submit" class="btn-primary">Deposit</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+// Light lock only — the real protection is that publishing requires the repo owner's GitHub account.
+const ADMIN_PASSCODE = "konecta2026";
+const LS_KEY = "konecta-bucks-data-v1";
+
+let data = { title: "Konecta Bucks — Direct Deposit", periodLabel: "", agents: [], deposits: [] };
+let admin = false;
+let view = "balances";
+
+const $ = id => document.getElementById(id);
+const fmtDate = iso => {
+  if (!iso) return "—";
+  const d = new Date(iso + "T12:00:00");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+};
+const todayISO = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); };
+
+function agentStats(name) {
+  const mine = data.deposits.filter(d => d.agent === name);
+  const total = mine.reduce((s, d) => s + Number(d.amount || 0), 0);
+  const latest = mine.length ? mine.map(d => d.date).sort().slice(-1)[0] : null;
+  const lastNote = latest ? (mine.filter(d => d.date === latest).slice(-1)[0].note || "") : "";
+  return { total, count: mine.length, latest, using: lastNote };
+}
+
+function render() {
+  $("pageTitle").textContent = data.title || "Konecta Bucks — Direct Deposit";
+  document.title = data.title || "Konecta Bucks";
+  $("periodLabel").textContent = data.periodLabel || "";
+
+  const total = data.deposits.reduce((s, d) => s + Number(d.amount || 0), 0);
+  const active = data.agents.filter(a => agentStats(a.name).count > 0).length;
+  $("statTotal").textContent = total.toLocaleString();
+  $("statActive").textContent = active;
+  $("statAgents").textContent = data.agents.length;
+  $("statCount").textContent = data.deposits.length;
+  $("statAvg").textContent = data.deposits.length ? Math.round(total / data.deposits.length).toLocaleString() : "0";
+  $("balCount").textContent = data.agents.length;
+  $("ledCount").textContent = data.deposits.length;
+
+  const q = $("searchBox").value.trim().toLowerCase();
+  const bb = $("balancesBody");
+  bb.innerHTML = "";
+  const rows = data.agents
+    .map(a => ({ name: a.name, ...agentStats(a.name) }))
+    .filter(r => !q || r.name.toLowerCase().includes(q) || (r.using || "").toLowerCase().includes(q))
+    .sort((x, y) => y.total - x.total || x.name.localeCompare(y.name));
+  for (const r of rows) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${escapeHtml(r.name)}</td>
+      <td class="num kb">${r.total.toLocaleString()} KB</td>
+      <td class="num">${r.count}</td>
+      <td>${fmtDate(r.latest)}</td>
+      <td>${escapeHtml(r.using || "—")}</td>`;
+    if (admin) {
+      const td = document.createElement("td");
+      const dep = document.createElement("button"); dep.className = "btn-deposit"; dep.textContent = "+ Deposit";
+      dep.onclick = () => openDeposit(r.name);
+      const ren = document.createElement("button"); ren.className = "btn-deposit"; ren.textContent = "Rename";
+      ren.onclick = () => renameAgent(r.name);
+      const del = document.createElement("button"); del.className = "btn-danger"; del.textContent = "✕";
+      del.title = "Remove agent"; del.onclick = () => removeAgent(r.name);
+      td.append(dep, " ", ren, " ", del);
+      tr.appendChild(td);
+    }
+    bb.appendChild(tr);
+  }
+  $("balancesEmpty").classList.toggle("hidden", data.agents.length > 0);
+
+  const lb = $("ledgerBody");
+  lb.innerHTML = "";
+  const entries = [...data.deposits].sort((a, b) => (b.date + b.agent).localeCompare(a.date + a.agent));
+  for (const d of entries) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${fmtDate(d.date)}</td><td>${escapeHtml(d.agent)}</td>
+      <td class="num kb">${Number(d.amount).toLocaleString()} KB</td><td>${escapeHtml(d.note || "—")}</td>`;
+    if (admin) {
+      const td = document.createElement("td");
+      const del = document.createElement("button"); del.className = "btn-danger"; del.textContent = "✕";
+      del.title = "Delete deposit";
+      del.onclick = () => { if (confirm("Delete this deposit?")) { data.deposits.splice(data.deposits.indexOf(d), 1); saveLocal(); render(); } };
+      td.appendChild(del);
+      tr.appendChild(td);
+    }
+    lb.appendChild(tr);
+  }
+  $("ledgerEmpty").classList.toggle("hidden", data.deposits.length > 0);
+
+  document.querySelectorAll(".admin-only").forEach(el => el.classList.toggle("hidden", !admin));
+  $("balancesView").classList.toggle("hidden", view !== "balances");
+  $("ledgerView").classList.toggle("hidden", view !== "ledger");
+  $("tabBalances").classList.toggle("active", view === "balances");
+  $("tabLedger").classList.toggle("active", view === "ledger");
+}
+
+function escapeHtml(s) { const d = document.createElement("div"); d.textContent = s ?? ""; return d.innerHTML; }
+function saveLocal() { localStorage.setItem(LS_KEY, JSON.stringify(data)); }
+
+function openDeposit(agentName) {
+  const sel = $("depAgent");
+  sel.innerHTML = "";
+  for (const a of data.agents) { const o = document.createElement("option"); o.value = a.name; o.textContent = a.name; sel.appendChild(o); }
+  if (agentName) sel.value = agentName;
+  $("depAmount").value = ""; $("depNote").value = ""; $("depDate").value = todayISO();
+  $("depositDialog").showModal();
+}
+
+function renameAgent(oldName) {
+  const n = prompt("Rename agent:", oldName);
+  if (!n || !n.trim() || n.trim() === oldName) return;
+  const name = n.trim();
+  if (data.agents.some(a => a.name === name)) { alert("That name already exists."); return; }
+  data.agents.find(a => a.name === oldName).name = name;
+  data.deposits.forEach(d => { if (d.agent === oldName) d.agent = name; });
+  saveLocal(); render();
+}
+
+function removeAgent(name) {
+  if (!confirm(`Remove ${name}? Their deposit history will also be removed.`)) return;
+  data.agents = data.agents.filter(a => a.name !== name);
+  data.deposits = data.deposits.filter(d => d.agent !== name);
+  saveLocal(); render();
+}
+
+$("tabBalances").onclick = () => { view = "balances"; render(); };
+$("tabLedger").onclick = () => { view = "ledger"; render(); };
+$("searchBox").addEventListener("input", render);
+$("newDepositBtn").onclick = () => { if (data.agents.length) openDeposit(); else alert("Add an agent first."); };
+$("depCancel").onclick = () => $("depositDialog").close();
+$("depositForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const amount = Number($("depAmount").value);
+  if (!amount || amount <= 0) return;
+  data.deposits.push({ agent: $("depAgent").value, amount, date: $("depDate").value || todayISO(), note: $("depNote").value.trim() });
+  saveLocal(); render(); $("depositDialog").close();
+});
+
+$("adminBtn").onclick = () => {
+  if (admin) return;
+  const p = prompt("Admin passcode:");
+  if (p === ADMIN_PASSCODE) {
+    admin = true;
+    $("adminBar").classList.add("show");
+    $("newDepositBtn").classList.remove("hidden");
+    $("adminBtn").textContent = "🔓 Admin on";
+    render();
+  } else if (p !== null) alert("Wrong passcode.");
+};
+$("lockBtn").onclick = () => {
+  admin = false;
+  $("adminBar").classList.remove("show");
+  $("newDepositBtn").classList.add("hidden");
+  $("adminBtn").textContent = "🔒 Admin";
+  render();
+};
+$("addAgentBtn").onclick = () => {
+  const n = prompt("New agent's name:");
+  if (!n || !n.trim()) return;
+  const name = n.trim();
+  if (data.agents.some(a => a.name === name)) { alert("That name already exists."); return; }
+  data.agents.push({ name }); saveLocal(); render();
+};
+$("resetBtn").onclick = () => {
+  if (!confirm("Throw away this device's unpublished changes and reload the published board?")) return;
+  localStorage.removeItem(LS_KEY); location.reload();
+};
+$("publishBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "data.json"; a.click();
+  URL.revokeObjectURL(a.href);
+  alert("Downloaded the updated data.json.\n\nTo publish it for everyone: send the file to Lotus and ask for it to be uploaded, or replace data.json in the GitHub repo yourself. The board updates within a minute or two.");
+};
+
+async function init() {
+  const local = localStorage.getItem(LS_KEY);
+  if (local) { try { data = JSON.parse(local); render(); return; } catch (e) { /* fall through */ } }
+  try {
+    const res = await fetch("data.json?ts=" + Date.now());
+    if (res.ok) data = await res.json();
+  } catch (e) { /* keep defaults */ }
+  render();
+}
+init();
+</script>
+</body>
+</html>
